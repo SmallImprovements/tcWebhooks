@@ -149,6 +149,12 @@
 													<td></td>
 													<td colspan=2><span class="error" id="error_payloadFormat" style="margin-left: 0.5em;"></span></td>
 												</tr>
+                                                <tr style="border:none;">
+                                                    <td>Extra Payload Parameters:</td>
+                                                    <td colspan=2>
+                                                        <textarea id="webHookParams" name="extraParameters" style="margin: 0; padding: 0; width: 36em;"></textarea>
+                                                    </td>
+                                                </tr>
 					    					</table>     
 					    					
 					    			</div><!--hookPane -->

@@ -112,6 +112,7 @@
 				
 					jQueryWebhook('#webHookId').val(webhook.uniqueKey);	
 					jQueryWebhook('#webHookUrl').val(webhook.url);
+                    jQueryWebhook('#webHookParams').val(webhook.extraParameters);
 				    jQueryWebhook('#webHooksEnabled').attr('checked', webhook.enabled);
 				    jQueryWebhook.each(webhook.states, function(name, value){
 				    	jQueryWebhook('#' + value.buildStateName).attr('checked', value.enabled);

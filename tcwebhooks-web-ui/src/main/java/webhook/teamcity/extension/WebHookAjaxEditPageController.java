@@ -167,9 +167,9 @@ public class WebHookAjaxEditPageController extends BaseController {
 			    								params.put("message", "<errors><error id=\"\">" + projSettings.getUpdateMessage() + "</error>");
 			    							}
 			    						} else {
-			    							projSettings.updateWebHook(myProject.getProjectId(),request.getParameter("webHookId"), 
-			    														request.getParameter("URL"), enabled, 
-			    														states, request.getParameter("payloadFormat"), buildTypeAll, buildTypeSubProjects, buildTypes);
+			    							projSettings.updateWebHook(myProject.getProjectId(),request.getParameter("webHookId"),
+                                                    request.getParameter("URL"), request.getParameter("extraParameters"), enabled,
+                                                    states, request.getParameter("payloadFormat"), buildTypeAll, buildTypeSubProjects, buildTypes);
 			    							if(projSettings.updateSuccessful()){
 			    								myProject.persist();
 			    	    						params.put("messages", "<errors />");

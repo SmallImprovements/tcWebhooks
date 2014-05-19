@@ -10,12 +10,9 @@ import static webhook.teamcity.BuildStateEnum.BUILD_STARTED;
 import static webhook.teamcity.BuildStateEnum.BUILD_SUCCESSFUL;
 import static webhook.teamcity.BuildStateEnum.RESPONSIBILITY_CHANGED;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.*;
 
 import jetbrains.buildServer.serverSide.SBuildType;
 
@@ -36,24 +33,24 @@ public class WebHookConfig {
 	private String url;
 	private String payloadFormat = null;
 	private BuildState states = new BuildState();
-	private SortedMap<String, CustomMessageTemplate> templates; 
+	private SortedMap<String, CustomMessageTemplate> templates;
 	private Boolean allBuildTypesEnabled = true;
 	private Boolean subProjectsEnabled = true;
 	private Set<String> enabledBuildTypesSet = new HashSet<String>();
-	
+
 	@SuppressWarnings("unchecked")
 	public WebHookConfig (Element e) {
-		
+
 		int Min = 1000000, Max = 1000000000;
 		Integer Rand = Min + (int)(Math.random() * ((Max - Min) + 1));
 		this.uniqueKey = Rand.toString();
 		this.extraParameters = new TreeMap<String,String>();
 		this.templates = new TreeMap<String,CustomMessageTemplate>();
-		
+
 		if (e.getAttribute("url") != null){
 			this.setUrl(e.getAttributeValue("url"));
 		}
-		
+
 		if (e.getAttribute("enabled") != null){
 			this.setEnabled(Boolean.parseBoolean(e.getAttributeValue("enabled")));
 		}
@@ -72,7 +69,7 @@ public class WebHookConfig {
 			// Set to nvpairs by default for backward compatibility.
 			this.setPayloadFormat("nvpairs");
 		}
-		
+
 		if(e.getChild("states") != null){
 			Element eStates = e.getChild("states");
 			List<Element> statesList = eStates.getChildren("state");
@@ -80,13 +77,13 @@ public class WebHookConfig {
 				for(Element eState : statesList)
 				{
 					try {
-						states.setEnabled(BuildStateEnum.findBuildState(eState.getAttributeValue("type")), 
+						states.setEnabled(BuildStateEnum.findBuildState(eState.getAttributeValue("type")),
 										  eState.getAttribute("enabled").getBooleanValue());
 					} catch (DataConversionException e1) {e1.printStackTrace();}
 				}
 			}
 		}
-		
+
 		if(e.getChild("build-types") != null){
 			Element eTypes = e.getChild("build-types");
 			if (eTypes.getAttribute("enabled-for-all") != null){
@@ -111,7 +108,7 @@ public class WebHookConfig {
 				}
 			}
 		}
-		
+
 		if(e.getChild("parameters") != null){
 			Element eParams = e.getChild("parameters");
 			List<Element> paramsList = eParams.getChildren("param");
@@ -119,13 +116,13 @@ public class WebHookConfig {
 				for(Element eParam : paramsList)
 				{
 					this.extraParameters.put(
-							eParam.getAttributeValue("name"), 
+							eParam.getAttributeValue("name"),
 							eParam.getAttributeValue("value")
 							);
 				}
 			}
 		}
-		
+
 		if(e.getChild("custom-templates") != null){
 			Element eParams = e.getChild("custom-templates");
 			List<Element> templateList = eParams.getChildren("custom-template");
@@ -143,15 +140,15 @@ public class WebHookConfig {
 				}
 			}
 		}
-		
+
 	}
-	
+
 	/**
 	 * WebHooksConfig constructor. Unchecked version. Use with caution!!
 	 * This constructor does not check if the payloadFormat is valid.
 	 * It will still allow you to add the format, but the webhook might not
 	 * fire at runtime if the payloadFormat configured is not available.
-	 *  
+	 *
 	 * @param url
 	 * @param enabled
 	 * @param stateMask
@@ -182,13 +179,13 @@ public class WebHookConfig {
 		}
 		return e;
 	}
-	
+
 	public Element getAsElement(){
 		Element el = new Element("webhook");
 		el.setAttribute("url", this.getUrl());
 		el.setAttribute("enabled", String.valueOf(this.enabled));
 		el.setAttribute("format", String.valueOf(this.payloadFormat).toLowerCase());
-		
+
 		Element statesEl = new Element("states");
 		for (BuildStateEnum state : states.getStateSet()){
 			Element e = new Element("state");
@@ -197,11 +194,11 @@ public class WebHookConfig {
 			statesEl.addContent(e);
 		}
 		el.addContent(statesEl);
-		
+
 		Element buildsEl = new Element("build-types");
 		buildsEl.setAttribute("enabled-for-all", Boolean.toString(isEnabledForAllBuildsInProject()));
 		buildsEl.setAttribute("enabled-for-subprojects", Boolean.toString(isEnabledForSubProjects()));
-		
+
 		if (this.enabledBuildTypesSet.size() > 0){
 			for (String i : enabledBuildTypesSet){
 				Element e = new Element("build-type");
@@ -210,7 +207,7 @@ public class WebHookConfig {
 			}
 		}
 		el.addContent(buildsEl);
-		
+
 		if (this.extraParameters.size() > 0){
 			Element paramsEl = new Element("parameters");
 			for (String i : this.extraParameters.keySet()){
@@ -218,7 +215,7 @@ public class WebHookConfig {
 			}
 			el.addContent(paramsEl);
 		}
-		
+
 		if (this.templates.size() > 0){
 			Element templatesEl = new Element("custom-templates");
 			for (CustomMessageTemplate t : this.templates.values()){
@@ -226,15 +223,28 @@ public class WebHookConfig {
 			}
 			el.addContent(templatesEl);
 		}
-		
+
 		return el;
 	}
-	
+
 	// Getters and Setters..
 
 	public SortedMap<String,String> getParams() {
 		return extraParameters;
 	}
+
+    public void setParams(String params) throws IOException {
+        this.extraParameters = new TreeMap<>();
+
+        if (params != null && !params.isEmpty()) {
+            final Properties props = new Properties();
+            props.load(new StringReader(params));
+
+            for (String propKey : props.stringPropertyNames()) {
+                extraParameters.put(propKey, props.getProperty(propKey));
+            }
+        }
+    }
 //
 //	public void setParams(List<NameValuePair> params) {
 //		this.params = params;

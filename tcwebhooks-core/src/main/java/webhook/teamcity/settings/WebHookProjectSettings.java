@@ -1,5 +1,6 @@
 package webhook.teamcity.settings;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -134,7 +135,7 @@ public class WebHookProjectSettings implements ProjectSettings {
         }    	
     }
 
-	public void updateWebHook(String ProjectId, String webHookId, String URL, Boolean enabled, BuildState buildState, String format, boolean buildTypeAll, boolean buildSubProjects, Set<String> buildTypesEnabled) {
+	public void updateWebHook(String ProjectId, String webHookId, String URL, String extraParams, Boolean enabled, BuildState buildState, String format, boolean buildTypeAll, boolean buildSubProjects, Set<String> buildTypesEnabled) {
         if(this.webHooksConfigs != null)
         {
         	updateSuccess = false;
@@ -144,6 +145,11 @@ public class WebHookProjectSettings implements ProjectSettings {
                 if (whc.getUniqueKey().equals(webHookId)){
                 	whc.setEnabled(enabled);
                 	whc.setUrl(URL);
+                    try {
+                        whc.setParams(extraParams);
+                    } catch (IOException e) {
+                        Loggers.SERVER.error("unable to apply extra parameters", e);
+                    }
                 	whc.setBuildStates(buildState);
                 	whc.setPayloadFormat(format);
                 	whc.enableForSubProjects(buildSubProjects);

@@ -3,6 +3,7 @@ package webhook.teamcity.extension.bean;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import webhook.teamcity.BuildStateEnum;
 import webhook.teamcity.payload.WebHookPayload;
@@ -10,6 +11,7 @@ import webhook.teamcity.settings.WebHookConfig;
 
 public class WebhookConfigAndBuildTypeListHolder {
 	public String url;
+    public String extraParameters;
 	public String uniqueKey; 
 	public boolean enabled;
 	public String payloadFormat;
@@ -23,6 +25,12 @@ public class WebhookConfigAndBuildTypeListHolder {
 	
 	public WebhookConfigAndBuildTypeListHolder(WebHookConfig config, Collection<WebHookPayload> registeredPayloads) {
 		url = config.getUrl();
+        extraParameters = "";
+        Map<String,String> params = config.getParams();
+        for (String key : params.keySet()) {
+            extraParameters += key + "=" + params.get(key) + "\n";
+        }
+        extraParameters = extraParameters.trim();
 		uniqueKey = config.getUniqueKey();
 		enabled = config.getEnabled();
 		payloadFormat = config.getPayloadFormat();
@@ -79,5 +87,5 @@ public class WebhookConfigAndBuildTypeListHolder {
 	public void setEnabledBuildsListForWeb(String enabledBuildsListForWeb) {
 		this.enabledBuildsListForWeb = enabledBuildsListForWeb;
 	}
-	
+
 }
